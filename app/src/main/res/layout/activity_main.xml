@@ -1,34 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+
     tools:context="com.example.song.cameraopencv.MainActivity">
 
     <Button
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/takePic"
         android:text="打开相机"/>
 
+
     <Button
+        android:layout_centerInParent="true"
+        android:layout_alignParentTop="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/takeGallery"
         android:text="打开相册"/>
 
     <Button
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
         android:id="@+id/defectDetection"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="缺陷检测" />
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/image_view"
-        android:visibility="visible"
-        android:layout_gravity="center"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/test"
+        android:text="检测测试"
+        android:layout_marginTop="40dp"/>
 
-</LinearLayout>
+    <EditText
+        android:id="@+id/threshold"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/test"
+        android:layout_marginTop="12dp" />
+
+    <ImageView
+        android:id="@+id/template_image"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_toStartOf="@+id/detec_image"
+        android:visibility="visible" />
+
+
+    <ImageView
+        android:id="@+id/detec_image"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:visibility="visible" />
+
+    <ImageView
+        android:id="@+id/compare_image"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_above="@+id/template_image"
+        android:layout_alignParentEnd="true"
+        android:visibility="visible" />
+
+</RelativeLayout>

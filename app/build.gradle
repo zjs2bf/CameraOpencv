@@ -27,6 +27,9 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     implementation project(':openCVLibrary330')
+
+    implementation files('libs/jamod-1.2-SNAPSHOT.jar')
+    implementation 'com.google.android.gms:play-services-appindexing:8.4.0'
 }
 
 task nativeLibsToJar(type: Jar, description: 'create a jar archive of the native libs'){
