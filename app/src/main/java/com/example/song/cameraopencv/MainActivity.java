@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 
 import org.opencv.android.OpenCVLoader;
@@ -29,21 +30,30 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 public class MainActivity extends AppCompatActivity {
 
     private String TAG = "CVSAMPLE";
-    private Button takePic,takeGallery,defectDetection;
+    private Button takePic,takeGallery,defectDetection,test;
     private File fileUri = new File(Environment.getExternalStorageDirectory().getPath() + "/photo.jpg");
-    private File fileCropUri = new File(Environment.getExternalStorageDirectory().getPath() + "/crop_photo.jpg");
+    private File fileCropUri = new File(Environment.getExternalStorageDirectory().getPath() + "/crop.jpg");
+    private File fileDetecUri = new File(Environment.getExternalStorageDirectory().getPath() + "/detec.jpg");
     private Uri imageUri;
-    private Uri srcImageUri;
+    private Uri detecImageUri;
+    private Uri cropImageUri;
     private static final int CODE_GALLERY_REQUEST = 0xa0;
     private static final int CODE_CAMERA_REQUEST = 0xa1;
     private static final int CODE_RESULT_REQUEST = 0xa2;
+    private static final int CODE_DETEC_REQUEST=0xa3;
+    private static final int CODE_RESULT2_REQUEST=0xa4;
     private static final int CAMERA_PERMISSIONS_REQUEST_CODE = 0x03;
     private static final int STORAGE_PERMISSIONS_REQUEST_CODE = 0x04;
+    private ImageView template_image;
+    private ImageView detec_image;
+    private ImageView compare_image;
     private int match_method;
+    private EditText editText;
 
     @Override
 
@@ -52,9 +62,15 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         takePic = findViewById(R.id.takePic);
         takeGallery = findViewById(R.id.takeGallery);
+        test = findViewById(R.id.test);
         defectDetection = findViewById(R.id.defectDetection);
+        template_image = findViewById(R.id.template_image);
+        detec_image = findViewById(R.id.detec_image);
+        compare_image = findViewById(R.id.compare_image);
+        editText = findViewById(R.id.threshold);
         takePic.setOnClickListener(click);
         takeGallery.setOnClickListener(click);
+        test.setOnClickListener(click);
         defectDetection.setOnClickListener(click);
         initLoadOpenCVLibs();//加载opencv库
 
@@ -74,10 +90,14 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.defectDetection:
                     DefectDetection();
                     break;
+                case R.id.test:
+                    test();
                 default:
             }
         }
     };
+
+
 
     /**
      * 自动获取相机权限
@@ -93,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
                 ToastUtils.showShort(this, "您已经拒绝过一次");
             }
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE}, CAMERA_PERMISSIONS_REQUEST_CODE);
+
         } else {//有权限直接调用系统相机拍照
             if (hasSdcard()) {
                 //通过FileProvider创建一个content类型的Uri
@@ -112,6 +133,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 调用系统相机拍照
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -152,42 +179,52 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private int OUTPUT_X=600;
+    private int OUTPUT_Y=600;
 
-//
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//
-//        if (resultCode == RESULT_OK) {
-//            switch (requestCode) {
-//                //拍照完成回调
-//                case CODE_CAMERA_REQUEST:
-//                    srcImageUri = Uri.fromFile(fileCropUri);
-//                    SysCameraActivity.cropImageUri(this, imageUri, cropImageUri, 1, 1, OUTPUT_X, OUTPUT_Y, CODE_RESULT_REQUEST);
-//                    break;
-//                //访问相册完成回调
-//                case CODE_GALLERY_REQUEST:
-//                    if (hasSdcard()) {
-//                        srcImageUri = Uri.fromFile(fileCropUri);
-//                        Uri newUri = Uri.parse(SysCameraActivity.getPath(this, data.getData()));
-//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-//                            newUri = FileProvider.getUriForFile(this, "com.zz.fileprovider", new File(newUri.getPath()));
-//                        }
-//                        SysCameraActivity.cropImageUri(this, newUri, cropImageUri, 1, 1, OUTPUT_X, OUTPUT_Y, CODE_RESULT_REQUEST);
-//                    } else {
-//                        ToastUtils.showShort(this, "设备没有SD卡！");
-//                    }
-//                    break;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                //拍照完成回调
+                case CODE_CAMERA_REQUEST:
+                    cropImageUri = Uri.fromFile(fileCropUri);
+                    SysCameraActivity.cropImageUri(this, imageUri, cropImageUri, 9998, 9999, OUTPUT_X, OUTPUT_Y, CODE_RESULT_REQUEST);
+//                    cropImageUri = FileProvider.getUriForFile(MainActivity.this, "com.example.song.cameraopencv.fileprovider", fileCropUri);
+                    break;
+                //检测按钮拍照完成回调
+                case CODE_DETEC_REQUEST:
+                    detecImageUri = Uri.fromFile(fileDetecUri);
+                    SysCameraActivity.cropImageUri(this, imageUri, detecImageUri, 9998, 9999, OUTPUT_X, OUTPUT_Y, CODE_RESULT2_REQUEST);
+//                    detecImageUri = FileProvider.getUriForFile(MainActivity.this, "com.example.song.cameraopencv.fileprovider", fileDetecUri);
+                    break;
+
+                //访问相册完成回调
+                case CODE_GALLERY_REQUEST:
+                    if (hasSdcard()) {
+                        cropImageUri = Uri.fromFile(fileCropUri);
+                        Uri newUri = Uri.parse(SysCameraActivity.getPath(this, data.getData()));
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                            newUri = FileProvider.getUriForFile(this, "com.example.song.cameraopencv.fileprovider", new File(newUri.getPath()));
+                        }
+                        SysCameraActivity.cropImageUri(this, newUri, cropImageUri, 1, 1, OUTPUT_X, OUTPUT_Y, CODE_RESULT_REQUEST);
+                    } else {
+                        ToastUtils.showShort(this, "设备没有SD卡！");
+                    }
+                    break;
 //                case CODE_RESULT_REQUEST:
 //                    Bitmap bitmap = SysCameraActivity.getBitmapFromUri(cropImageUri, this);
 //                    if (bitmap != null) {
 //                        showImages(bitmap);
 //                    }
 //                    break;
-//                default:
-//            }
-//        }
-//    }
+                default:
+            }
+        }
+    }
 
     /**
      * 自动获取sdk权限
@@ -203,48 +240,54 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void DefectDetection() {
-        //String src=imageUri.toString();
-        BitmapFactory.Options options=new BitmapFactory.Options();
-        options.inPreferredConfig= Bitmap.Config.ARGB_8888;
-        //Bitmap bitmap = BitmapFactory.decodeFile(src, options);
-        Bitmap bitmap2 = BitmapFactory.decodeResource(this.getResources(), R.drawable.template, options);
-        Bitmap bitmap = BitmapFactory.decodeResource(this.getResources(), R.drawable.src, options);
-        Mat img = new Mat();
-        Mat temp1 = new Mat();
-        Utils.bitmapToMat(bitmap,img);
-        Utils.bitmapToMat(bitmap2,temp1);
+        imageUri = FileProvider.getUriForFile(MainActivity.this, "com.example.song.cameraopencv.fileprovider", fileUri);
+        SysCameraActivity.takePicture(this, imageUri, CODE_DETEC_REQUEST);
 
+    }
 
-        //create the result matrix
-        int result_cols = img.cols() - temp1.cols() + 1;
-        int result_rows = img.rows() - temp1.rows() + 1;
-        Mat result = new Mat(result_rows, result_cols, CvType.CV_32FC1);
+    /**
+     * 测试图像灰度，二值化，缺陷面积检测
+     */
+    private void test() {
+        Mat src = new Mat();
+        Mat src2 = new Mat();
+        Mat graySrc = new Mat();
+        Mat binarySrc = new Mat();
+        Mat dst = new Mat();
+        Mat dst2 = new Mat();
+        Mat grayDst = new Mat();
+        Mat binaryDst = new Mat();
+        Mat diffMat = new Mat();
+        String threshold=editText.getText().toString();
+        int th = Integer.parseInt(threshold);
+        String org = Environment.getExternalStorageDirectory().getPath() + "/crop.jpg";
+        String detec = Environment.getExternalStorageDirectory().getPath() + "/detec.jpg";
+        Bitmap orgBitmap = BitmapFactory.decodeFile(org);
+        Bitmap detecBitmap = BitmapFactory.decodeFile(detec);
+        Bitmap currentBitmap1 = Bitmap.createBitmap(orgBitmap);
+//        Bitmap currentBitmap2 = Bitmap.createBitmap(detecBitmap);
+//        Bitmap currentBitmap3 = Bitmap.createBitmap(orgBitmap);
+        Utils.bitmapToMat(orgBitmap,src);
+        Utils.bitmapToMat(detecBitmap,dst);
+        Imgproc.cvtColor(src,src,Imgproc.COLOR_BGRA2BGR);//这个转换很重要，不然下面双边滤波会报格式错误~
+        Imgproc.bilateralFilter(src,src2,30,30*2,30/2);
+        Imgproc.cvtColor(src2,graySrc,Imgproc.COLOR_BGR2GRAY);
+        Imgproc.threshold(graySrc, binarySrc, th, 255, Imgproc.THRESH_BINARY);
+        Imgproc.cvtColor(dst,dst,Imgproc.COLOR_BGRA2BGR);
+        Imgproc.bilateralFilter(dst,dst2,30,30*2,30/2);
+        Imgproc.cvtColor(dst2,grayDst,Imgproc.COLOR_BGR2GRAY);
+        Imgproc.threshold(grayDst, binaryDst, th, 255, Imgproc.THRESH_BINARY);
+        //将二值化后的图片相减，用的不是Imgproc，而是Core。
+        Core.absdiff(binaryDst,binarySrc,diffMat);
+        Utils.matToBitmap(diffMat,currentBitmap1);
+//        Utils.matToBitmap(binarySrc,currentBitmap2);
+//        Utils.matToBitmap(binaryDst,currentBitmap3);
+//        detec_image.setImageBitmap(currentBitmap3);
+//        template_image.setImageBitmap(currentBitmap2);
 
-        //Do the Matching and Normalize
-        Imgproc.matchTemplate(img, temp1, result,match_method);
-        Core.normalize(result, result, 0, 1, Core.NORM_MINMAX, -1, new Mat());
+        compare_image.setImageBitmap(currentBitmap1);
+//        template_image.setImageBitmap(orgBitmap);
 
-        //Localizing the best match with minMaxLoc
-        Core.MinMaxLocResult mmr = Core.minMaxLoc(result);
-
-        Point matchLoc;
-        if (match_method == Imgproc.TM_SQDIFF || match_method == Imgproc.TM_SQDIFF_NORMED) {
-            matchLoc = mmr.minLoc;
-        } else {
-            matchLoc = mmr.maxLoc;
-        }
-
-        //show me what you got
-        Imgproc.rectangle(img, matchLoc, new Point(matchLoc.x + temp1.cols(), matchLoc.y + temp1.rows()), new Scalar(0, 255, 0));
-        Bitmap currentBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
-        Utils.matToBitmap(img,currentBitmap);
-        ImageView imageView=this.findViewById(R.id.image_view);
-        imageView.setImageBitmap(currentBitmap);
-
-        //Save the visualized detection
-
-//        System.out.println("Writing" + outFile);
-//        Imgcodecs.imwrite(outFile, img);
     }
 
     /**
