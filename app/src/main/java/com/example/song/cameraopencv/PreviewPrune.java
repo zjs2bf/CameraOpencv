@@ -28,7 +28,7 @@ public class PreviewPrune extends View {
     int clear = 0x0000000;
 
 
-    public ScreenShotView(Context context) {
+    public PreviewPrune(Context context) {
         super(context);
         startDot = new Dot();
         endDot = new Dot();
@@ -36,7 +36,7 @@ public class PreviewPrune extends View {
         rightBottomDot = new Dot();
     }
 
-    public ScreenShotView(Context context, @Nullable AttributeSet attrs) {
+    public PreviewPrune(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         startDot = new Dot();
         endDot = new Dot();
@@ -44,7 +44,7 @@ public class PreviewPrune extends View {
         rightBottomDot = new Dot();
     }
 
-    public ScreenShotView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public PreviewPrune(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         startDot = new Dot();
         endDot = new Dot();
@@ -57,6 +57,9 @@ public class PreviewPrune extends View {
         this.screenHeight = screenHeight;
         this.screenWidth = screenWidth;
         changeBitmapSize();
+        /*invalidate()函数的作用是使整个窗口客户区无效，此时就需要重汇，这个就会自动调用
+        * 窗口类的OnPaint函数，OnPaint负责重绘窗口。视图类中就调用OnDraw函数，实际的重绘工作由
+        * OnPaint或者OnDraw来完成。*/
         invalidate();
     }
 
@@ -68,7 +71,7 @@ public class PreviewPrune extends View {
         invalidate();
     }
     /**
-     *将将要显示的bitmap进行变形，使其铺满屏幕
+     *将 将要显示的bitmap进行变形，使其铺满屏幕
      *
      */
     private void changeBitmapSize() {
