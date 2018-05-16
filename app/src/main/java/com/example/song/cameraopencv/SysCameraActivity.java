@@ -59,7 +59,7 @@ public class SysCameraActivity extends Activity {
      * @param height      剪裁图片高度
      * @param requestCode 剪裁图片的请求码
      */
-    //这段代码在后续的调用中是否能实现拍照完，截图后，又返回拍照界面
+
     public static void cropImageUri(Activity activity, Uri orgUri, Uri desUri, int aspectX, int aspectY, int width, int height, int requestCode) {
         Intent intent = new Intent("com.android.camera.action.CROP");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
